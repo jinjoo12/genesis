@@ -29,8 +29,8 @@
             
             const imgRate = 1.3452443510246979;  //slideImg.innerWidth() / winW; // 창너비(1903)대한 이미지(2560) 비율
             const imgTranRate = 0.1265625;  // 이미지(2560) 크기에 대한 translateX (-값비율) : 324 / 2560 ransform: translateX(-324px)
-            console.log('슬라이드 이미지 너비 = ' + slideImg.innerWidth() );
-            console.log('슬라이드 이미지 비율 = ' + imgRate );
+            // console.log('슬라이드 이미지 너비 = ' + slideImg.innerWidth() );
+            // console.log('슬라이드 이미지 비율 = ' + imgRate );
 
 
             // 이미지 크기 조절 => 창크기에 반응하는 이미지 크기
@@ -74,9 +74,13 @@
 
 
             //슬라이드 좌측 끝
-            console.log( slideWrap.offset().left );
+            // console.log( slideWrap.offset().left );
 
             // 터치 스와이프 이벤트
+            // 데스크탑 : 마우스 터치 스와이프 이벤트
+            // 데스크탑 : 마우스 터치 드래그 앤 드롭
+            // 태블릿 & 모바일 : 손가락(핑거링) 터치 스와이프 이벤트
+            // 태블릿 & 모바일 : 손가락(핑거링) 터치 드래그 앤 드롭
             slideContainer.on({
                 mousedown(e){
                     winW = $(window).innerWidth();
@@ -139,7 +143,64 @@
                     }
                     mDown = false;
                 }
+            });
+
+
+            // 태블릿 & 모바일 : 손가락(핑거링) 터치 스와이프 이벤트
+            // 태블릿 & 모바일 : 손가락(핑거링) 터치 드래그 앤 드롭
+            slideContainer.on({
+                touchstart(e){
+                    winW = $(window).innerWidth();
+                    sizeX = winW/4;
+                    mouseDown = e.originalEvent.changedTouches[0].clientX; 
+                    dragStart = e.originalEvent.changedTouches[0].clientX - (slideWrap.offset().left+1903);  
+                    mDown = true;            
+                },
+                touchend(e){
+                    mouseUp = e.originalEvent.changedTouches[0].clientX;        
+                    
+                    if( mouseDown-mouseUp > sizeX ){
+                        clearInterval(setId); // 클릭시 일시중지
+                        if(!slideWrap.is(':animated')){
+                            nextCount();
+                        }                            
+                    }
+                    
+                    if( mouseDown-mouseUp < -sizeX ){
+                        clearInterval(setId); // 클릭시 일시중지
+                        if(!slideWrap.is(':animated')){
+                            prevCount();
+                        }                            
+                    }
+                    mDown = false;
+                    if( mouseDown-mouseUp >= sizeX && mouseDown-mouseUp <= sizeX ){
+                        mainSlide();
+                    }
+
+                },
+                touchmove(e){
+                    if(!mDown) return;
+                    dragEnd = e.originalEvent.changedTouches[0].clientX;
+                    // console.log(dragEnd-dragStart);
+                    slideWrap.css({left: dragEnd - dragStart});
+
+                }
             })
+
+            //손가락 터치 이벤트 확인하기 
+            //=> 태블릿과 모바일에서만 동작
+            // originalEvent: TouchEvent, type: 'touchstart'
+            // slideContainer.on({
+            //     touchstart(e){
+            //         console.log( e.originalEvent.changedTouches[0].clientX);
+            //     },  
+            //     touchend(e){
+            //         console.log( e.originalEvent.changedTouches[0].clientX);
+            //     },
+            //     // touchmove(e){
+            //     //     console.log( e.originalEvent.changedTouches[0].clientX);
+            //     // }
+            // });
 
 
 
@@ -232,7 +293,7 @@
 
             let mDown = false;
             let winW = $(window).innerWidth();
-            let sizeX = 400;
+            let sizeX = 100;
             let offsetL = slideWrap.offset().left;
             let slideWidth;
 
@@ -276,6 +337,8 @@
                 
             });
 
+
+            // 데스크탑 터치 스와이프 & 드래그 앤 드롭
             slideContainer.on({
                 mousedown(e){
                     touchStart = e.clientX;
@@ -325,6 +388,35 @@
                     slideview.css({cursor: 'grab'});
                 }
             })
+
+            // 태블릿, 모바일 터치 스와이프 & 드래그 앤 드롭
+            slideContainer.on({
+                touchstart(e){
+                    touchStart = e.originalEvent.changedTouches[0].clientX;
+                    dragStart = e.originalEvent.changedTouches[0].clientX - (slideWrap.offset().left-offsetL);
+                    mDown = true;
+                    slideview.css({cursor: 'grabbing'});
+                },
+                touchend(e){
+                    touchEnd = e.originalEvent.changedTouches[0].clientX;
+                    if(touchStart-touchEnd > sizeX){
+                        nextCount();
+                    }
+                    if(touchStart-touchEnd < -sizeX){
+                        prevCount();
+                    }
+                    if( touchStart-touchEnd >= -sizeX && touchStart-touchEnd <= sizeX ){
+                        mainSlide();
+                    }
+                    mDown = false;
+                    slideview.css({cursor: 'grab'});
+                },
+                touchmove(e){
+                    if(!mDown) return;
+                    dragEnd = e.originalEvent.changedTouches[0].clientX;
+                    slideWrap.css({left: dragEnd - dragStart});
+                }
+            });  
 
 
 
